@@ -1,0 +1,426 @@
+<?php
+namespace collections;
+
+
+class BaseController
+{
+
+    /** @var $modx \DocumentParser */
+    protected $modx;
+    protected $render;
+
+    private $defaultParams = [
+        'id' => [
+            "id" =>"[+id+]",
+            'header' => ["[+caption+]", ['content' => "serverFilter"]],
+            'sort' => "server",
+            'fillspace' => 1,
+        ],
+        'text' => [
+            "id" =>"[+id+]",
+            'header' => ["[+caption+]", ['content' => "serverFilter"]],
+            'sort' => "server",
+            'editor' => "text",
+            'fillspace' => 2,
+        ],
+        'title' => [
+            "id" =>"[+id+]",
+            'header' => ["[+caption+]", ['content' => "serverFilter"]],
+            'sort' => "server",
+            'editor' => "text",
+            'fillspace' => 8,
+            'cssFormat' => 'status',
+        ],
+        'thumb' => [
+            'id' => "image",
+            'header' => ["[+caption+]"],
+            'template' => '<center><img src="/#[+id+]_thumb#" class="image-thumb"></center>',
+            'width' => 60,
+            'tooltip' => '<img src="/#[+id+]#" class="image-tooltip" >'
+        ],
+        'image' => [
+            'id' => "image",
+            'header' => ["[+caption+]"],
+            'template' => '<center><img src="/#[+id+]_thumb#" class="image-thumb js-add-image" data-id="#id#" data-field="[+id+]"></center>',
+            'width' => 60,
+            'tooltip' => '<img src="/#[+id+]#" class="image-tooltip" >'
+        ],
+        'checkbox' => [
+            'id' => "[+id+]",
+            'header' => ["[+caption+]", ['content' => "serverFilter"]],
+            'sort' => "string",
+            'editor' => "text",
+            'width' => 70,
+            'checkValue' => '1',
+            'uncheckValue' => '0',
+            'template' => "{common.checkbox()}"
+        ],
+        'edit'=>[
+            'id'=>"edit",
+            'header' => [""],
+            'template' => "<a class='edit btn btn-info' href='index.php?a=27&id=#id#' title='редактировать' data-title='#pagetitle#'><span class='webix_icon fa-edit'></span></a>",
+            'width'=>50
+        ]
+    ];
+
+    protected $fields = [
+        'id'=>[
+            'caption'=>'Ид',
+            'fillspace' => 1,
+            'type'=>'id'
+        ],
+        'pagetitle'=>[
+            'caption'=>'Заголовок',
+            'type'=>'title'
+        ],
+        'published'=>[
+            'caption'=>'Опубликован',
+            'type'=>'checkbox'
+        ],
+        'deleted'=>[
+            'caption'=>'Удален',
+            'type'=>'checkbox'
+        ],
+
+        'edit'=>[
+            'type'=>'edit'
+        ],
+
+    ];
+
+    /**
+     * Параметры выборки
+     * @var array
+     */
+    protected $DLParams = [
+        'showNoPublish' => '1',
+        'depth' => '6',
+        'api' => '1',
+        'paginate'=>'pages',
+        'JSONformat' => 'simple',
+
+        'tvPrefix'=>'',
+
+    ];
+    /**
+     * Параметры для нового документу
+     * @var array
+     */
+    protected $newDocParams = [
+
+    ];
+
+    /**
+     * Направление сортировки по умолчанию
+     * @var string
+     */
+    protected $orderBy = 'id asc';
+    /**
+     * Количество документов
+     * @var int
+     */
+    public $display = 50;
+    protected $parent;
+
+    public function __construct($modx,$parent)
+    {
+        $this->modx = $modx;
+        $this->parent = $parent;
+        $this->render = \DLTemplate::getInstance($modx);
+    }
+
+
+    /**
+     * Генерируем колонки для webix
+     * @return false|string
+     */
+    public function renderColumns(){
+
+        $output = [];
+        foreach ($this->fields as $id => $fieldParams) {
+
+            $type = isset($fieldParams['type'])?$fieldParams['type']:'text';
+            $defaultParams = !empty($this->defaultParams[$type])?$this->defaultParams[$type]:[];
+
+            $params = array_merge($defaultParams,$fieldParams);
+
+            $parseData = [
+                'id'=> $id,
+                'caption'=> $fieldParams['caption'],
+            ];
+            $params = $this->parseParams($params,$parseData);
+
+
+            $output[] = $params;
+        }
+
+        return json_encode($output, JSON_UNESCAPED_UNICODE);
+    }
+    protected function isDefaultField($filterName){
+        $default_field = array(
+            'id', 'type', 'contentType', 'pagetitle', 'longtitle', 'description', 'alias', 'link_attributes', 'published', 'pub_date',
+            'unpub_date', 'parent', 'isfolder', 'introtext', 'content', 'richtext', 'template', 'menuindex', 'searchable',
+            'cacheable', 'createdon', 'createdby', 'editedon', 'editedby', 'deleted', 'deletedon', 'deletedby', 'publishedon',
+            'publishedby', 'menutitle', 'donthit', 'privateweb', 'privatemgr', 'content_dispo', 'hidemenu', 'alias_visible'
+        );
+        return in_array($filterName,$default_field);
+    }
+
+    /**
+     * Формируем фильтра для параметра filters DocLister
+     * @return array|string
+     */
+    protected function getDLFilters(){
+        $DLFilters = [];
+
+        if (!empty($_GET['filter'])) {
+            $filters = $_GET['filter'];
+
+            foreach ($filters as $filterName => $filterValue) {
+
+                if ($filterValue === '') continue;
+                $filterName = $this->modx->db->escape($filterName);
+                $filterValue = $this->modx->db->escape($filterValue);
+
+                $filterType = 'tvd';
+                if ($this->isDefaultField($filterName)) {
+                    $filterType = 'content';
+                    $filterName = 'c.' . $filterName;
+                }
+                $DLFilters[] = $filterType . ':' . $filterName . ':%:' . $filterValue;
+            }
+        }
+
+        if (!empty($DLFilters)) {
+            $DLFilters = 'AND(' . implode(';', $DLFilters) . ')';
+        } else {
+            $DLFilters = '';
+        }
+        return $DLFilters;
+    }
+
+    /**
+     * Формируем мисив параметорв для DocLister для получения данных
+     * @return array
+     */
+    protected function getDLParams(){
+        //тащим инфу о фильтрах
+        $params = $this->DLParams;
+
+        $params['filters'] = $this->getDLFilters();
+        $params['orderBy'] = $this->getOrderBy();
+
+        //ставим parents
+        if(!isset($params['parents']) && empty($params['idType'])){
+            $params['parents'] = $this->parent;
+        }
+        //ставим количество документов на странице
+        if(!isset($params['display'])){
+            $params['display'] = $this->display;
+        }
+        if(!isset($params['tvList'])){
+            $params['tvList'] = $this->getTVList();
+        }
+        if(!isset($params['selectFields'])){
+            $params['selectFields'] = $this->getSelectFields();
+        }
+
+        return $params;
+
+    }
+
+    /**
+     * Получаем данные из базы
+     * @return array
+     */
+    //выводит инфу об ресурсах
+    public function getData()
+    {
+        //пагинация
+        $start = 0;
+        if(!empty($_GET['start'])){
+            $start = intval($_GET['start']);
+            $_GET['page'] = $start / $this->display + 1;
+
+        }
+
+        $DLParams = $this->getDLParams();
+
+        $resource = $this->modx->runSnippet('DocLister', $DLParams);
+        $resource = json_decode($resource, true);
+
+
+        foreach ($resource as $key => $res) {
+            $resource[$key] = $this->prepareData($res);
+        }
+
+        $outData = [
+            'data' => $resource,
+            'pos' => $start,
+        ];
+        if (empty($_GET['start'])) { //первая страница
+            $outData['total_count'] = $this->modx->getPlaceholder('count');
+        }
+        return $outData;
+
+    }
+
+    /**
+     * Подготавляваем данные перед выводом
+     * @param $res
+     * @return mixed
+     */
+    protected function prepareData($res)
+    {
+        $res['statusImage'] = '';
+
+        foreach ($this->fields as $fieldName => $fieldData) {
+            if(in_array($fieldData['type'],['thumb','image'])){
+
+            $res[$fieldName.'_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$res[$fieldName],'options'=>'w=30,h=30,zc=C']);
+            }
+
+        }
+
+        return $res;
+    }
+
+    /**
+     * @param array $params
+     * @param array $parseData
+     * @return array
+     */
+    protected function parseParams(array $params, array $parseData)
+    {
+        foreach ($params as $name => $value) {
+            if (is_array($value)) {
+                $params[$name] = $this->parseParams($value, $parseData);
+            } else {
+                if(strpos($value,'[+') !== false){
+                $params[$name] = $this->render->parseChunk('@CODE:' . $value, $parseData);
+                }
+            }
+        }
+        return $params;
+
+
+    }
+
+    /**
+     * Формируем список необходимых тв полей
+     * @return string
+     */
+    protected function getTVList()
+    {
+        $tvList = [];
+        foreach ($this->fields as $name => $value) {
+            if(!$this->isDefaultField($name)){
+                $tvList[] = $name;
+            }
+        }
+        return implode(',',$tvList);
+    }
+
+    /**
+     * Определяем поля для сортировки
+     * @return array|string
+     */
+    protected function getOrderBy()
+    {
+        if(empty($_GET['sort'])){
+            return $this->orderBy;
+        }
+
+        $sortBy = key($_GET['sort']);
+        $sortOrder = $_GET['sort'][$sortBy];
+
+        $orderBy = $this->modx->db->escape($sortBy.' '.$sortOrder);
+        return $orderBy;
+
+
+    }
+
+
+    /**
+     * Метод испольняется для сохранения данных
+     * @return array
+     */
+    public function saveAction(){
+        $req = $this->modx->db->escape($_REQUEST);
+        $outData = ['status' => 'error'];
+
+        //если у нас нет заголовка ставим фейковый id
+        if(empty($req['pagetitle'])){
+            return array('newid' => 'noid_'.microtime(), 'status' => 'success');
+        }
+
+        switch ($_REQUEST['webix_operation']) {
+            case 'insert':
+            case 'update':
+                $doc = new \modResource($this->modx);
+                if (is_numeric($req['id'])) {
+                    $doc->edit($req['id']);
+                } else {
+                    $doc->create($this->getNewDocParams());
+                }
+                $doc->fromArray($req);
+                $result = $doc->save(true, false);
+
+
+                if ($result) {
+                    $outData = array(
+                        'newid' => $result,
+                        'alias'=>$doc->get('alias'),
+                        'status' => 'success'
+                    );
+                } else {
+                    $outData = array('status' => 'error');
+                }
+                break;
+            case 'delete':
+                //
+                break;
+        }
+        return $outData;
+    }
+
+    /**
+     * Подготавляваем масив данных для создания документа
+     * @return array
+     */
+    protected function getNewDocParams()
+    {
+        $params = $this->newDocParams;
+        if(!isset($params['parent'])){
+            $params['parent'] = $this->parent;
+        }
+
+        return $params;
+    }
+
+    /**
+     * Формируем список полея которые необходимо вытащить, идет в параметр selectFields DocLister
+     * @return string
+     */
+    protected function getSelectFields()
+    {
+        $selectFields = [
+            'id','pagetitle','published','deleted'
+        ];
+
+        foreach ($this->fields as $fieldName => $options) {
+            if($this->isDefaultField($fieldName) && !in_array($fieldName,$selectFields)){
+                $selectFields[] = $fieldName;
+            }
+        }
+
+        //добавляем c.
+        foreach ($selectFields as $key => $field) {
+            $selectFields[$key] = 'c.'.$field;
+        }
+        return implode(',',$selectFields);
+
+
+    }
+
+}
