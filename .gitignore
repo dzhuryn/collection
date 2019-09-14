@@ -15,7 +15,6 @@
 /assets/images/
 /assets/import/
 /assets/js/
-/assets/lib/
 /assets/index.html
 /assets/tvs/
 /assets/templates/
@@ -27,3 +26,12 @@
 /assets/modules/store/
 /assets/modules/index.html
 .idea
+/assets/lib/.htaccess
+/assets/lib/APIHelpers.class.php
+/assets/lib/class.modxRTEbridge.php
+/assets/lib/class.summary.php
+/assets/lib/SimpleTab/
+/assets/lib/MODxAPI/
+/assets/lib/Module/
+/assets/lib/Helpers/
+/assets/lib/Formatter/
