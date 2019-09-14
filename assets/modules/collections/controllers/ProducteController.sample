@@ -2,7 +2,7 @@
 namespace collections;
 include_once 'BaseController.php';
 
-class NewsController extends BaseController{
+class ProductController extends BaseController{
 
 
     protected $fields = [
@@ -15,11 +15,20 @@ class NewsController extends BaseController{
             'caption'=>'Заголовок',
             'type'=>'title'
         ],
+        'price'=>[
+            'caption'=>'Цена',
+        ],
+        'old_price'=>[
+            'caption'=>'Старая цена.',
+        ],
+        'sg_image'=>[
+            'caption'=>'Фото',
+            'type'=>'thumb',
+        ],
 
-
-        'date'=>[
-            'caption'=>'Дата',
-            'type'=>'text',
+        'imageformain'=>[
+            'caption'=>'Фото для главной',
+            'type'=>'image',
         ],
 
 
@@ -50,13 +59,11 @@ class NewsController extends BaseController{
         ]);
     }
 
-        public $display = 50;
     protected function prepareData($data)
     {
         $data =  parent::prepareData($data);
 
         $data['sg_image'] = $data['images'][0]['sg_image'];
-
         $data['sg_image_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$data['sg_image'],'options'=>'w=30,h=30,zc=C']);
         unset($data['images']);
 
