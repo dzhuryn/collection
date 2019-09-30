@@ -107,48 +107,24 @@
 
 
     webix.ready(function(){
-        datatable = webix.ui({
+        datatable = webix.ui(
+			[+datatable+]
+        );
 
-			container :"docs",
-			columns:[+columns+],
+		datatable.attachEvent("onAfterDrop", function (response, id, object) {
 
-			url:"[+moduleurl+]action=getDocs&controller=[+controller+]&docOnPage="+docOnPage,
-			save:{
-				url:"[+moduleurl+]action=saveDoc&controller=[+controller+]",
-				undoOnError:true,
-				updateFromResponse:true
+			var items = [];
+			datatable.eachRow(
+					function (row) {
+						var item = datatable.getItem(row);
+						items.push(item.id);
+					}
+			)
+			$.post('[+moduleurl+]action=sortable',{
+				ids:items.join(','),
+			})
+		});
 
-			},
-			checkboxRefresh:true,
-			autoConfig: false,
-			width: '90%',
-			view: "datatable",
-			editable:true,
-			borderless:false,
-			drag:false,
-			navigation:true,
-			select:true,
-
-			multiselect:true,
-			autoheight:true,
-			scroll:false,
-
-
-			pager:{
-				size:docOnPage,
-				container :"pager",
-				group:6,
-				template: '{common.first()} {common.pages()}  {common.last()}',
-
-			},
-			fixedRowHeight:false,
-			rowLineHeight:40,
-			rowHeight:40,
-			resizeColumn:true,
-			hover:"myhover",
-			id: 'table',
-			tooltip:true
-        });
 
 		webix.dp($$("table")).attachEvent('onAfterSaveError', function (id, status, response, details) {
 		    webix.alert("Произошла ошибка");

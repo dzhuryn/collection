@@ -1,0 +1,94 @@
+<?php
+namespace collections;
+include_once 'BaseController.php';
+
+/*
+ *  В данном прмере показано как вывести preview из обычной tv, multitv simplegallery, а также как увеличить размер картинки
+ */
+
+class PreviewController extends BaseController{
+
+
+    //указываем размеры preview
+    protected $previewWidth = 100;
+    protected $previewHeight = 100;
+
+    protected $fields = [
+        'id'=>[
+            'caption'=>'Ид',
+            'fillspace' => 1,
+            "editor" => false,
+        ],
+        'pagetitle'=>[
+            'caption'=>'Заголовок',
+            'type'=>'title',
+        ],
+
+        'sg_image'=>[
+            'caption'=>'Фото',
+            'type'=>'thumb',
+        ],
+        'multitv_preview'=>[
+            'caption'=>'Превю из multitv',
+            'type'=>'thumb',
+        ],
+
+        'image'=>[
+            'caption'=>'Фото для главной',
+            'type'=>'image',
+        ],
+
+
+        'edit'=>[
+            'type'=>'edit'
+        ],
+
+    ];
+
+    //Так как у нас превю в multitv и индекс поля отличается от название тв нам нужно явно указать что нам нужно тв поле photos
+    protected $tvList = 'photos';
+
+    public function __construct($modx, $parent,$moduleurl)
+    {
+        parent::__construct($modx, $parent,$moduleurl);
+
+        //для получение preivew ил simple gallery наследуем контроллер sg_site_content чтоб получить масив картинок для каждого товарв
+        $this->DLParams = array_merge($this->DLParams,[
+            'controller' => 'sg_site_content',
+            'dir'=> 'assets/snippets/simplegallery/controller/',
+        ]);
+
+        //чтоб вывести большое preview переопределяем размер строку таблицы
+        $this->datatableOptions = array_merge($this->datatableOptions,[
+            'rowLineHeight'=>80,
+            'rowHeight'=>80,
+        ]);
+
+        //переопределяем ширину ячейки для полей image и thumb
+        $this->defaultParams['thumb']['width'] = 80;
+        $this->defaultParams['image']['width'] = 80;
+    }
+
+    protected function prepareData($data)
+    {
+        $data =  parent::prepareData($data);
+
+        //получаем первую картинку из simple gallery
+        $data['sg_image'] = $data['images'][0]['sg_image'];
+        $data['sg_image_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$data['sg_image'],'options'=>'w='.$this->previewWidth.',h='.$this->previewHeight.',zc=C']);
+
+        //получаем первую картинку из multitv
+        $multiTVImage = json_decode($data['photos'],true);
+        if(!empty($multiTVImage['fieldValue'][0]['image'])){
+        $data['multitv_preview'] = $multiTVImage['fieldValue'][0]['image'];
+        $data['multitv_preview_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$data['multitv_preview'],'options'=>'w='.$this->previewWidth.',h='.$this->previewHeight.',zc=C']);
+        }
+
+
+        unset($data['images']);
+        unset($data['photos']);
+
+        return $data;
+    }
+
+}

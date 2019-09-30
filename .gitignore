@@ -35,3 +35,7 @@
 /assets/lib/Module/
 /assets/lib/Helpers/
 /assets/lib/Formatter/
+/assets/modules/collections/controllers/ProducteController.php
+/assets/modules/collections/controllers/ProductController.php
+/assets/modules/collections/controllers/SortableController.php
+/assets/modules/collections/controllers/PreviewController.php

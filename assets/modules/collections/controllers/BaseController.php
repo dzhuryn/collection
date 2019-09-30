@@ -9,7 +9,40 @@ class BaseController
     protected $modx;
     protected $render;
 
-    private $defaultParams = [
+    /** Параметры для нового документу **/
+    protected $newDocParams = [];
+
+    /** Направление сортировки по умолчанию */
+    protected $orderBy = 'id asc';
+
+    /**  Количество документов на странице /*/
+    public $display = 50;
+
+    /**  Список обезательных тв параметров **/
+    protected $tvList = '';
+
+    /**  Ширина и высота превю **/
+    protected $previewWidth = 30;
+    protected $previewHeight = 30;
+
+    /**
+     * Параметры выборки
+     * @var array
+     */
+    protected $DLParams = [
+        'showNoPublish' => '1',
+        'depth' => '6',
+        'api' => '1',
+        'paginate'=>'pages',
+        'JSONformat' => 'simple',
+
+        'tvPrefix'=>'',
+
+    ];
+
+
+
+    protected $defaultParams = [
         'id' => [
             "id" =>"[+id+]",
             'header' => ["[+caption+]", ['content' => "serverFilter"]],
@@ -34,26 +67,34 @@ class BaseController
         'thumb' => [
             'id' => "image",
             'header' => ["[+caption+]"],
-            'template' => '<center><img src="/#[+id+]_thumb#" class="image-thumb"></center>',
+            'template' => '<img src="/#[+id+]_thumb#" class="image-thumb">',
             'width' => 60,
-            'tooltip' => '<img src="/#[+id+]#" class="image-tooltip" >'
+            'tooltip' => '<img src="/#[+id+]#" class="image-tooltip" >',
+            'css'=>'image-cell',
         ],
         'image' => [
             'id' => "image",
             'header' => ["[+caption+]"],
-            'template' => '<center><img src="/#[+id+]_thumb#" class="image-thumb js-add-image" data-id="#id#" data-field="[+id+]"></center>',
+            'template' => '<img src="/#[+id+]_thumb#" class="image-thumb js-add-image" data-id="#id#" data-field="[+id+]">',
             'width' => 60,
-            'tooltip' => '<img src="/#[+id+]#" class="image-tooltip" >'
+            'tooltip' => '<img src="/#[+id+]#" class="image-tooltip" >',
+            'css'=>'image-cell',
         ],
         'checkbox' => [
             'id' => "[+id+]",
             'header' => ["[+caption+]", ['content' => "serverFilter"]],
-            'sort' => "string",
+            'sort' => "server",
             'editor' => "text",
             'width' => 70,
             'checkValue' => '1',
             'uncheckValue' => '0',
             'template' => "{common.checkbox()}"
+        ],
+        'select' => [
+            'id' => "[+id+]",
+            'header' => ["[+caption+]", ['content' => "serverSelectFilter"]],
+            'sort' => "server",
+            'editor' => "select",
         ],
         'edit'=>[
             'id'=>"edit",
@@ -87,46 +128,63 @@ class BaseController
         ],
 
     ];
+    protected $datatableOptions = [
+            'container'=>'docs',
+			'columns'=>'[+columns+]',
+			//'url'=>"[+moduleurl+]action=getDocs&controller=[+controller+]&docOnPage="+docOnPage,
+			'save'=>[
+			//	'url'=>'"[+moduleurl+]action=saveDoc&controller=[+controller+]",
+				'undoOnError'=>true,
+				'updateFromResponse'=>true
 
-    /**
-     * Параметры выборки
-     * @var array
-     */
-    protected $DLParams = [
-        'showNoPublish' => '1',
-        'depth' => '6',
-        'api' => '1',
-        'paginate'=>'pages',
-        'JSONformat' => 'simple',
+			],
+            'checkboxRefresh'=>true,
+			'autoConfig'=> false,
+			'width'=>'90%',
+			'view'=> 'datatable',
+			'editable'=>true,
+			'borderless'=>false,
+			'drag'=>false,
+			'navigation'=>true,
+			'select'=>true,
 
-        'tvPrefix'=>'',
+			'multiselect'=>true,
+			'autoheight'=>true,
+			'scroll'=>false,
 
+			'pager'=>[
+         //   'size'=>$this->display,
+			'container' =>'pager',
+			'group'=>6,
+			'template'=>'{common.first()} {common.pages()}  {common.last()}',
+
+			],
+			'fixedRowHeight'=>false,
+			'rowLineHeight'=>40,
+			'rowHeight'=>40,
+			'resizeColumn'=>true,
+			'hover'=>'myhover',
+			'id'=>'table',
+			'tooltip'=>true
     ];
-    /**
-     * Параметры для нового документу
-     * @var array
-     */
-    protected $newDocParams = [
 
-    ];
 
-    /**
-     * Направление сортировки по умолчанию
-     * @var string
-     */
-    protected $orderBy = 'id asc';
-    /**
-     * Количество документов
-     * @var int
-     */
-    public $display = 50;
     protected $parent;
+    protected $actionUrl;
+    protected $controllerName;
 
-    public function __construct($modx,$parent)
+    public function __construct($modx,$parent,$actionUrl)
     {
         $this->modx = $modx;
         $this->parent = $parent;
         $this->render = \DLTemplate::getInstance($modx);
+
+
+        $className = get_class($this);
+        $this->controllerName = strtolower(str_replace(['collections\\','Controller'],'',$className));
+        $this->actionUrl = $actionUrl;
+
+
     }
 
 
@@ -149,12 +207,34 @@ class BaseController
                 'caption'=> $fieldParams['caption'],
             ];
             $params = $this->parseParams($params,$parseData);
-
+            if($params['editor'] === 'select' && !empty($params['options']) && is_string($params['options'])){
+                $params['options'] = $this->parseOptionsSelect($params['options']);
+            }
 
             $output[] = $params;
         }
 
-        return json_encode($output, JSON_UNESCAPED_UNICODE);
+        return $output;
+    }
+    public function renderDataTableOptions()
+    {
+        $columns = $this->renderColumns();
+        $getDocsUrl = $this->actionUrl."action=getDocs&controller=$this->controllerName&docOnPage=$this->display";
+        $saveDocsUrl = $this->actionUrl."action=saveDoc&controller=$this->controllerName";
+
+
+
+        $options = $this->datatableOptions;
+        $options = array_merge($options,[
+            'url'=>$getDocsUrl,
+            'size'=>$this->display,
+            'columns'=>$columns,
+        ]);
+        $options['save']['url'] = $saveDocsUrl;
+
+
+        return $options;
+
     }
     protected function isDefaultField($filterName){
         $default_field = array(
@@ -209,6 +289,7 @@ class BaseController
 
         $params['filters'] = $this->getDLFilters();
         $params['orderBy'] = $this->getOrderBy();
+        $params['tvList'] = $this->getTVList();
 
         //ставим parents
         if(!isset($params['parents']) && empty($params['idType'])){
@@ -218,9 +299,7 @@ class BaseController
         if(!isset($params['display'])){
             $params['display'] = $this->display;
         }
-        if(!isset($params['tvList'])){
-            $params['tvList'] = $this->getTVList();
-        }
+
         if(!isset($params['selectFields'])){
             $params['selectFields'] = $this->getSelectFields();
         }
@@ -245,6 +324,7 @@ class BaseController
         }
 
         $DLParams = $this->getDLParams();
+
 
         $resource = $this->modx->runSnippet('DocLister', $DLParams);
         $resource = json_decode($resource, true);
@@ -275,9 +355,10 @@ class BaseController
         $res['statusImage'] = '';
 
         foreach ($this->fields as $fieldName => $fieldData) {
-            if(in_array($fieldData['type'],['thumb','image'])){
+            if(!empty($fieldData['type']) && in_array($fieldData['type'],['thumb','image'])){
+                $src = !empty($res[$fieldName])?$res[$fieldName]:'';
 
-            $res[$fieldName.'_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$res[$fieldName],'options'=>'w=30,h=30,zc=C']);
+            $res[$fieldName.'_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$src,'options'=>'w='.$this->previewWidth.',h='.$this->previewHeight.',zc=C']);
             }
 
         }
@@ -313,6 +394,9 @@ class BaseController
     protected function getTVList()
     {
         $tvList = [];
+       if(!empty($this->tvList)){
+           $tvList = explode(',',$this->tvList);
+       }
         foreach ($this->fields as $name => $value) {
             if(!$this->isDefaultField($name)){
                 $tvList[] = $name;
@@ -423,4 +507,49 @@ class BaseController
 
     }
 
+    private function parseOptionsSelect($value)
+    {
+
+
+        $options = [
+            ['id'=>'','value'=>'']
+        ];
+        if (stristr($value, "@EVAL")) {
+            $value = trim(substr($value, 6));
+            $value = str_replace("\$modx->", "\$this->modx->", $value);
+            $value = eval($value);
+
+            foreach (explode('||',$value) as $group) {
+                $resp = explode('==',$group);
+                $options[] = ['id'=>$resp[1],'value'=>$resp[0]];
+            }
+        }
+        else if(stristr($value, "@SELECT")){
+            $sql = str_replace(['[+PREFIX+]','@SELECT'],[$this->modx->db->config['table_prefix'],'SELECT'],$value);
+
+            $data = $this->modx->db->makeArray($this->modx->db->query($sql));
+            foreach ($data as $el) {
+                $resp = array_values($el);
+                $options[] = ['id'=>$resp[1],'value'=>$resp[0]];
+            }
+        }
+        else{
+            $options = $value;
+        }
+        return $options;
+    }
+
+    public function sortable($ids)
+    {
+        $docs = explode(',',$ids);
+
+        foreach ($docs as $key=> $docId) {
+            $obj = new \modResource($this->modx);
+            $obj->edit($docId);
+            $obj->set('menuindex',$key);
+            $obj->save(false,false);
+        }
+        return ['status'=>true];
+        
+    }
 }

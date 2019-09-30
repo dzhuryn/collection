@@ -2,8 +2,28 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/style.css" />
+    <!--
+    <link rel="stylesheet" type="text/css" href="media/style/common/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/common/font-awesome/css/font-awesome.min.css" />
+
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/fonts.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/css/tabpane.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/css/contextmenu.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/css/main.css" />
+
+-->
+
+
+
+
+
+
+
+
     <link type="text/css" rel="stylesheet" href="../assets/lib/webix/codebase/skins/compact.css">
     <style>
+
         body{
             width: 100%;
             overflow-x: hidden;
@@ -54,11 +74,19 @@
         }
         img[src*='noimage'] {display:none;}
         .image-thumb.js-add-image{
-            display: block;
+            display: inline-block;
+        }
+        .image-cell .webix_cell{
+            padding: 0 5px;
         }
         .edit.btn {
             padding: .4em;
             vertical-align: middle;
+        }
+        .webix_dt_editor select{
+            height: 100% !important;
+            line-height: 100% !important;
+
         }
     </style>
     <script src="../assets/js/jquery.min.js" type="text/javascript" charset="utf-8"></script>

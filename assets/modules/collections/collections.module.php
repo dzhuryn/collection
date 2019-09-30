@@ -8,6 +8,7 @@
  *
  *
  */
+
 //создаем модуль и вставляем строку: include_once(MODX_BASE_PATH.'assets/modules/collections/collections.module.php');
 if (IN_MANAGER_MODE != "true" || empty($modx) || !($modx instanceof DocumentParser)) {
     die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please use the MODX Content Manager instead of accessing this file directly.");
@@ -25,8 +26,11 @@ $tpl = DLTemplate::getInstance($modx);
 //Выводим список параметров которые нужны в шаблоне
 $moduleurl = 'index.php?a=112&id='.$_GET['id'].'&parent='.$_GET['parent'].'&';
 $action = isset($_GET['action']) ? $_GET['action'] : 'home';
+$outTpl = null;
+$outData = [];
 
-$inModule = $_GET['from'] == 'doc'?false:true;
+
+$inModule = !empty($_GET['from']) && $_GET['from'] == 'doc'?false:true;
 $controllerName = !empty($defaultController)?$defaultController:'base';
 $defaultParent = isset($defaultParent)?$defaultParent:0;
 $parent = !empty($_GET['parent'])?intval($_GET['parent']):$defaultParent;
@@ -54,7 +58,7 @@ else{
     include_once 'controllers/BaseController.php';
     $className = '\collections\\' . ucfirst($defaultController) . 'Controller';
 }
-$controller = new $className($modx,$parent);
+$controller = new $className($modx,$parent,$moduleurl);
 
 
 //выполнение действий
@@ -62,8 +66,9 @@ switch ($action) {
     case 'home'://главная страничка вывод и шаблон
         $ownerTpl = $inModule ? 'productsOwner' : 'tabOwner';
 
+
         $data = array_merge($data,[
-            'columns'=>$controller->renderColumns(),
+            'datatable'=>json_encode($controller->renderDataTableOptions(),JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
             'parentTab'=>!$inModule?'parent.':'',
             'controller'=>$controllerName,
             'display'=>$controller->display
@@ -81,6 +86,9 @@ switch ($action) {
     case 'getDocs'://получение всех документов
         $outData = $controller->getData();
         break;
+    case 'sortable':
+        $outData = $controller->sortable($_POST['ids']);
+        break;
 
     case 'getThumb':
         $outData = $modx->runSnippet('phpthumb',['input'=>$_GET['image'],'options'=>'w=30,h=30,zc=C']);
@@ -94,7 +102,6 @@ switch ($action) {
 
 // Вывод результата или шаблон или Ajax 
 if(!is_null($outTpl)){
-
     $headerTpl = '@CODE:'.file_get_contents(dirname(__FILE__).'/templates/header.tpl');
     $footerTpl = '@CODE:'.file_get_contents(dirname(__FILE__).'/templates/footer.tpl');
     $output = $tpl->parseChunk($headerTpl,$data) . $outTpl . $tpl->parseChunk($footerTpl,$data);

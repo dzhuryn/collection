@@ -1,0 +1,42 @@
+<?php
+namespace collections;
+include_once 'BaseController.php';
+
+/*
+ *  В даном примере показано как можна организировать сортировку по полю menuindex
+ */
+class SortableController extends BaseController{
+
+    protected $fields = [
+        'id'=>[
+            'caption'=>'Ид',
+            'fillspace' => 1,
+            "editor" => false,
+        ],
+        'pagetitle'=>[
+            'caption'=>'Заголовок',
+            'type'=>'title'
+        ],
+
+        'edit'=>[
+            'type'=>'edit'
+        ],
+
+    ];
+
+    protected $orderBy = 'menuindex asc';
+
+    public function __construct($modx, $parent,$moduleurl)
+    {
+        parent::__construct($modx, $parent,$moduleurl);
+        $this->datatableOptions['drag'] = true;
+        unset($this->datatableOptions['size']);
+        unset($this->datatableOptions['pager']);
+
+
+
+    }
+
+
+
+}

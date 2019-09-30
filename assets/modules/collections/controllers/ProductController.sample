@@ -5,6 +5,7 @@ include_once 'BaseController.php';
 class ProductController extends BaseController{
 
 
+
     protected $fields = [
         'id'=>[
             'caption'=>'Ид',
@@ -26,11 +27,24 @@ class ProductController extends BaseController{
             'type'=>'thumb',
         ],
 
-        'imageformain'=>[
-            'caption'=>'Фото для главной',
-            'type'=>'image',
+        'producer'=>[
+            'caption'=>'Производитель',
+            'type'=>'select',
+            'options'=>'@EVAL return $modx->runSnippet("multiParams", array("parent"=>"17","firstEmpty"=>"true", "action"=>"getParamsFromTree"));',
         ],
-
+        'collection'=>[
+            'caption'=>'Колекция',
+            'type'=>'select',
+            'options'=>'@SELECT pagetitle, id FROM [+PREFIX+]site_content WHERE parent = 21 ORDER BY menuindex ASC',
+        ],
+        'stock'=>[
+            'caption'=>'Наличие',
+            'type'=>'select',
+            'options'=>[
+                ['id'=>'yes','value'=>'Да'],
+                ['id'=>'no','value'=>'Нет'],
+            ],
+        ],
 
         'published'=>[
             'caption'=>'Опубликован',
@@ -47,15 +61,14 @@ class ProductController extends BaseController{
 
     ];
 
-    public function __construct($modx, $parent)
+
+    public function __construct($modx, $parent,$moduleurl)
     {
-        parent::__construct($modx, $parent);
+        parent::__construct($modx, $parent,$moduleurl);
 
         $this->DLParams = array_merge($this->DLParams,[
             'controller' => 'sg_site_content',
             'dir'=> 'assets/snippets/simplegallery/controller/',
-
-//            'sgOrderBy'=>'sg_index DESC',
         ]);
     }
 
@@ -63,9 +76,15 @@ class ProductController extends BaseController{
     {
         $data =  parent::prepareData($data);
 
+        //получаем первую картинку из simple gallery
         $data['sg_image'] = $data['images'][0]['sg_image'];
         $data['sg_image_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$data['sg_image'],'options'=>'w=30,h=30,zc=C']);
+
+
+
+
         unset($data['images']);
+        unset($data['photos']);
 
         return $data;
     }
