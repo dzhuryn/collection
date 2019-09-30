@@ -7,7 +7,7 @@
  * @category    plugin
  * @internal    @events OnDocFormRender,OnManagerNodePrerender
  * @internal    @modx_category 
- * @internal    @properties &module_id=Module Id;text;3&tab_name=Tab name;text;Collections&treeOnClickModuleConfig=Tree Configuration where show module on doc click ;textarea;See plugin code for details&treeConfig=Tree Configuration where hide childrens;textarea;See plugin code for details&tabConfig=Tab Configuration;textarea;See plugin code for details&controllerConfig=Controllers Configuration;textarea;See plugin code for details
+ * @internal    @properties &module_id=Module Id;text;&tab_name=Tab name;text;Collections&treeOnClickModuleConfig=Tree Configuration where show module on doc click ;textarea;See plugin code for details&treeConfig=Tree Configuration where hide childrens;textarea;See plugin code for details&tabConfig=Tab Configuration;textarea;See plugin code for details&controllerConfig=Controllers Configuration;textarea;See plugin code for details
  * @internal    @disabled 0
  * @internal    @installset base
  */
