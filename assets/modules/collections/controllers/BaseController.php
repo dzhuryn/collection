@@ -227,10 +227,10 @@ class BaseController
         $options = $this->datatableOptions;
         $options = array_merge($options,[
             'url'=>$getDocsUrl,
-            'size'=>$this->display,
             'columns'=>$columns,
         ]);
         $options['save']['url'] = $saveDocsUrl;
+	$options['pager']['size'] = $this->display;
 
 
         return $options;
