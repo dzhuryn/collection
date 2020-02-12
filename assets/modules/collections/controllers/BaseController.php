@@ -360,7 +360,12 @@ class BaseController
 
             $res[$fieldName.'_thumb'] = $this->modx->runSnippet('phpthumb',['input'=>$src,'options'=>'w='.$this->previewWidth.',h='.$this->previewHeight.',zc=C']);
             }
+        }
 
+        foreach ($res as $key => $value) {
+            if (is_string($value) && $value !== 'url') {
+                $res[$key] = strip_tags(stripcslashes($value));
+            }
         }
 
         return $res;
