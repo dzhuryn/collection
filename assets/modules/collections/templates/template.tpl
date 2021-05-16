@@ -1,57 +1,157 @@
-<div id="docs" style="width:100%;"></div>
-<div class="bottom-actions">
+<div class="top-actions">
 	<div class="group">
-		<select id="mass-actions">
+		<select name="action" id="mass-actions" >
 			<option value="">Действия</option>
-			<option value="del">Удалить</option>
-			<option value="restore">Восстановить</option>
-			<option value="unpub">Снять с публикации</option>
-			<option value="pub">Опубликовать</option>
+			<option value="multiplication">Умножить</option>
+			<option value="division">Поделить</option>
+			<option value="plus">Увеличить</option>
+			<option value="minus">Уменьшить</option>
+			<option value="set">Установить</option>
 		</select>
-		<a  class="btn btn-secondary" href="javascript:;" id="user-mass-actions">
-			<span class="fa-check webix_icon"></span> Применить
+
+		<select name="action" id="mass-action-field" style="display: none">
+
+		</select>
+
+		<div id="mass-action-field-value-owner" class="mass-action-field-value-owner">
+
+		</div>
+
+
+		<a  class="btn btn-secondary" href="javascript:;" onclick="applyMassActionSelected()" id="user-mass-actions">
+			<span class="fa fa-check "></span> Применить
 		</a>
+
+        <a  class="btn btn-secondary" href="javascript:;" onclick="applyMassActionAll()" id="use-mass-action-all">
+            <span class="fa fa-check-double "></span> Применить ко всем
+        </a>
 
 		<a id="Button4" class="btn btn-success add-item ml-2" href="javascript:;">
 			<span class="fa-file-o webix_icon"></span> Добавить ресурс
 		</a>
 	</div>
 </div>
+
+<div id="docs" style="width:100%;"></div>
+
 <div id="pager" class="ec_pager"></div>
 
 <script>
-	//массовые действия
-	$(document).on('click','#user-mass-actions',function () {
-		var $select = $('#mass-actions');
-		var action = $select.val();
+	var getDocsUrl = '[+getDocsUrl+]';
+	var massActionFields = JSON.parse('[+massActionFields+]');
+	var massActions = JSON.parse('[+massActions+]');
 
-		if(action === '') return;
+	$(document).on('change','#mass-actions',function () {
 
-		var actionTitle,actionField,actionNewValue;
-		switch (action) {
-			case 'del':
-				actionTitle = 'удалить';
-				actionField = 'deleted';
-				actionNewValue = '1';
-				break;
-			case 'restore':
-				actionTitle = 'восстановить';
-				actionField = 'deleted';
-				actionNewValue = '0';
-				break;
-			case 'unpub':
-				actionTitle = 'снять с публикации';
-				actionField = 'published';
-				actionNewValue = '0';
-				break;
-			case 'pub':
-				actionTitle = 'опубликовать';
-				actionField = 'published';
-				actionNewValue = '1';
-				break;
+        $('#mass-action-field-value-owner').html('').hide('')
+
+		var $massActionFieldSelector = $('#mass-action-field');
+		$massActionFieldSelector.hide().html($('<option value="">Поле</option>'));
+		var action = $(this).val();
+		if(!massActions[action]){
+			return;
+		}
+		var actionSupportFields = massActions[action];
+
+		actionSupportFields.forEach(function (fieldName) {
+
+			var fieldConfig = massActionFields[fieldName];
+
+			$massActionFieldSelector.append($('<option></option>').val(fieldName).text(fieldConfig.caption));
+
+		})
+
+		$massActionFieldSelector.show();
+	});
+
+
+    $('#mass-action-field').change(function () {
+        var fieldName = $(this).val();
+
+        var massAction = $('#mass-actions').val();
+
+
+        var $owner = $('#mass-action-field-value-owner');
+        $owner.hide().html('');
+
+
+        if (!massActionFields[fieldName]) {
+            return;
+        }
+
+        var fieldConfig = massActionFields[fieldName];
+
+
+        var valueFieldType = massAction === 'set'?fieldConfig.type:'number';
+
+        var $valueField = '';
+        switch (valueFieldType) {
+            case 'number':
+                $valueField = $('<input name="action-field-value" />').attr('type', 'number');
+                break;
+            case 'text':
+                $valueField = $('<input name="action-field-value" />').attr('type', 'number');
+                break;
+
+            case  'select':
+                var elements = fieldConfig.elements;
+                $valueField = $('<select name="action-field-value" />');
+                for (var elementValue in elements) {
+                    $valueField.append($('<option></option>').val(elementValue).text(elements[elementValue]));
+                }
+                break;
+        }
+
+
+        $owner.append($valueField);
+        $owner.show()
+
+    });
+
+    function applyMassActionRequest(request){
+
+    	var actionType = $('#mass-actions').val();
+    	var actionField = $('#mass-action-field').val();
+    	var actionFieldValue = $('[name="action-field-value"]').val();
+
+    	if(!actionType){
+    		webix.alert('Выберите тип операции');
+    		return;
+		}
+		if(!actionField){
+			webix.alert('Выберите поле');
+			return;
 		}
 
 
+
+    	request['actionType'] = actionType;
+    	request['actionField'] = actionField;
+    	request['actionFieldValue'] = actionFieldValue;
+
+
+
+    	console.log(request)
+
+		$.post('[+moduleurl+]action=massUpdate',request,function (response) {
+			if(response.status){
+				webix.alert('Обновлены '+response.count);
+
+				datatable.clearAll();
+				datatable.load(getDocsUrl);
+				datatable.filterByAll();
+
+
+			}
+			else {
+				webix.alert('Ошибка')
+			}
+
+
+		})
+
+	}
+    function applyMassActionSelected(){
 		var resources = datatable.getSelectedItem();
 
 		if(resources === undefined){
@@ -72,24 +172,53 @@
 			}
 		}
 
+		var productRequest = {
+			type:'selected',
+			documents:ids
+		};
+
+		applyMassActionRequest(productRequest);
+	}
+	function applyMassActionAll(){
+
+
 
 		webix.confirm({
-			title: "Удалить заказы",// the text of the box header
-			text: "Вы уверенны что хотите "+actionTitle+" следующие ресурсы "+ids.join(','),
+			title: "<h3>Вы уверены?</h3> <span style='color: red;font-size: 12px'>рекомендуем делать <a target='_blank' href='/manager/index.php?a=93'>бекап</a> перед применением массовых действий во избежания непредвиденных ситуаций</span>",
+			input: false,
+			ok: "Ок",
+			cancel: "Отмена",
 			callback: function(result) {
-				if (result) {
-					ids.forEach(function (id) {
-						var item = datatable.getItem(id);
-						item[actionField] = actionNewValue;
-						datatable.updateItem(id,item);
+				if(result === true){
+
+					var filter = {};
+
+					datatable.eachColumn(function(columnId){
+						var value = datatable.getFilter(columnId);
+						value = $(value).val();
+						if(value){
+							filter[columnId] = value;
+						}
 					})
+
+
+					var productRequest = {
+						type:'all',
+						filter
+					};
+					applyMassActionRequest(productRequest);
+
 				}
 			}
+
 		});
 
 
 
-	});
+	}
+
+
+
 	var datatable;
 	var docOnPage = [+display+];
 

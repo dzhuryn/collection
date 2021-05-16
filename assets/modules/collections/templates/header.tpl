@@ -61,16 +61,21 @@
         .deleted {
             color: red !important;
         }
-        .bottom-actions .group{
+        .top-actions .group{
             text-align: right;
             white-space: nowrap;
-            margin: 10px 0 0 0;
+            margin: 0 0 10px 0;
         }
-        .bottom-actions select{
+        .top-actions select{
             display: inline-block;
             height: 2.55em;
             width:auto;
             max-width: 300px;
+        }
+
+
+        .top-actions .mass-action-field-value-owner{
+            display: inline-block;
         }
         img[src*='noimage'] {display:none;}
         .image-thumb.js-add-image{

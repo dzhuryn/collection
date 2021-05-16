@@ -69,11 +69,18 @@ switch ($action) {
 
         $data = array_merge($data,[
             'datatable'=>json_encode($controller->renderDataTableOptions(),JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+
+            'getDocsUrl'=>$controller->getGetDocsUrl(),
+            'massActionFields'=>json_encode($controller->getMassActionFields(),JSON_UNESCAPED_UNICODE),
+            'massActions'=>json_encode($controller->getMassActions(),JSON_UNESCAPED_UNICODE ),
+
             'parentTab'=>!$inModule?'parent.':'',
             'controller'=>$controllerName,
             'display'=>$controller->display
 
         ]);
+
+
 
 //        $data['bottom-buttons'] = $tpl->parseChunk('@CODE:' . file_get_contents(dirname(__FILE__) . '/templates/bottom-buttons.tpl'), $data);
 //        $data['owner'] = $tpl->parseChunk('@CODE:' . file_get_contents(dirname(__FILE__) . '/templates/' . $ownerTpl . '.tpl'), $data);
@@ -81,6 +88,10 @@ switch ($action) {
         $data['template'] = $tpl->parseChunk('@CODE:' . file_get_contents(dirname(__FILE__) . '/templates/template.tpl'), $data);
         $outTpl = $tpl->parseChunk('@CODE:' . file_get_contents(dirname(__FILE__) . '/templates/' . $ownerTpl . '.tpl'), $data);
 
+        break;
+
+    case 'massUpdate'://получение всех документов
+        $outData = $controller->massUpdate();
         break;
 
     case 'getDocs'://получение всех документов

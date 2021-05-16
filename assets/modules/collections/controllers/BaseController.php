@@ -126,22 +126,86 @@ class BaseController
         'edit'=>[
             'type'=>'edit'
         ],
+    ];
+
+    /**
+     * @return \string[][]
+     */
+    public function getMassActionFields()
+    {
+        return $this->massActionFields;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMassActions()
+    {
+        return $this->massActions;
+    }
+
+
+
+    protected $massActionFields = [
+        'price'=>[
+            'caption'=>'Цена',
+            'type'=>'text',
+            'decimals' => 0
+
+        ],
+        'published'=>[
+            'caption'=> 'Опубликовано',
+            'type'=>'select',
+            'elements'=>[
+                '1'=>'Да',
+                '0'=>'Нет',
+
+            ]
+        ],
+        'deleted'=>[
+            'caption'=> 'Удалено',
+            'type'=>'select',
+            'elements'=>[
+                '1'=>'Да',
+                '0'=>'Нет',
+
+            ]
+        ]
+    ];
+    protected $massActions = [
+        'multiplication'=>[
+            'price'
+        ],
+        'division'=>[
+            'price'
+        ],
+        'plus'=>[
+            'price'
+        ],
+        'minus'=>[
+            'price'
+        ],
+        'set'=>[
+            'published','deleted','price'
+        ]
 
     ];
+
     protected $datatableOptions = [
             'container'=>'docs',
 			'columns'=>'[+columns+]',
-			//'url'=>"[+moduleurl+]action=getDocs&controller=[+controller+]&docOnPage="+docOnPage,
+            'view'=> 'datatable',
+        'id'=>'table',
+//
 			'save'=>[
-			//	'url'=>'"[+moduleurl+]action=saveDoc&controller=[+controller+]",
 				'undoOnError'=>true,
 				'updateFromResponse'=>true
 
 			],
             'checkboxRefresh'=>true,
 			'autoConfig'=> false,
-			'width'=>'90%',
-			'view'=> 'datatable',
+
+
 			'editable'=>true,
 			'borderless'=>false,
 			'drag'=>false,
@@ -153,7 +217,6 @@ class BaseController
 			'scroll'=>false,
 
 			'pager'=>[
-         //   'size'=>$this->display,
 			'container' =>'pager',
 			'group'=>6,
 			'template'=>'{common.first()} {common.pages()}  {common.last()}',
@@ -164,7 +227,7 @@ class BaseController
 			'rowHeight'=>40,
 			'resizeColumn'=>true,
 			'hover'=>'myhover',
-			'id'=>'table',
+
 			'tooltip'=>true
     ];
 
@@ -175,6 +238,7 @@ class BaseController
 
     public function __construct($modx,$parent,$actionUrl)
     {
+
         $this->modx = $modx;
         $this->parent = $parent;
         $this->render = \DLTemplate::getInstance($modx);
@@ -219,8 +283,8 @@ class BaseController
     public function renderDataTableOptions()
     {
         $columns = $this->renderColumns();
-        $getDocsUrl = $this->actionUrl."action=getDocs&controller=$this->controllerName&docOnPage=$this->display";
-        $saveDocsUrl = $this->actionUrl."action=saveDoc&controller=$this->controllerName";
+        $getDocsUrl = $this->getGetDocsUrl();
+        $saveDocsUrl = $this->getSaveDocsUrl();
 
 
 
@@ -253,8 +317,8 @@ class BaseController
     protected function getDLFilters(){
         $DLFilters = [];
 
-        if (!empty($_GET['filter'])) {
-            $filters = $_GET['filter'];
+        if (!empty($_REQUEST['filter'])) {
+            $filters = $_REQUEST['filter'];
 
             foreach ($filters as $filterName => $filterValue) {
 
@@ -308,6 +372,89 @@ class BaseController
 
     }
 
+    public function massUpdate()
+    {
+
+        $DLParams = $this->getDLParams();
+
+        if ($_POST['type'] == 'selected') {
+            $DLParams = array_merge([
+                'idType' => 'documents',
+                'documents' => implode(',', $_POST['documents'])
+            ],$DLParams);
+        }
+
+
+        unset($DLParams['orderBy'], $DLParams['tvList'],$DLParams['display']);
+
+        $DLParams['selectFields'] = 'c.id';
+
+
+        $documents = json_decode($this->modx->runSnippet('DocLister', $DLParams), true);
+
+
+
+        $count = 0;
+
+        $actionField = $_POST['actionField'];
+        $formValue = $_POST['actionFieldValue'];
+
+        $actionFieldConfig = $this->massActionFields[$actionField];
+        $decimals  = isset($actionFieldConfig['decimals']) ? $actionFieldConfig['decimals']:0;
+
+
+        foreach ($documents as $document) {
+
+
+
+            $doc = new \modResource($this->modx);
+            $doc->edit($document['id']);
+
+            $oldValue = $doc->get($actionField);
+
+
+            switch ($_POST['actionType']) {
+                case 'multiplication':
+                    $newValue = (float)$oldValue * (float)$formValue;
+                    $newValue = number_format($newValue,$decimals,'','');
+                    break;
+                case 'division':
+                    $newValue = (float)$oldValue / (float)$formValue;
+                    $newValue = number_format($newValue,$decimals,'','');
+                    break;
+                case 'plus':
+                    $newValue = (float)$oldValue + (float)$formValue;
+                    $newValue = number_format($newValue,$decimals,'','');
+                    break;
+                case 'minus':
+                    $newValue = (float)$oldValue - (float)$formValue;
+                    $newValue = number_format($newValue,$decimals,'','');
+                    break;
+                case 'set':
+                    $newValue = $formValue;
+                    break;
+
+                default:
+                    die('Action not found');
+                    break;
+            }
+
+
+
+
+            $doc->set($actionField, $newValue);
+            $save = $doc->save(true);
+
+            $count++;
+        }
+
+        return [
+            'status'=> true,
+            'count'=>$count
+        ];
+
+
+    }
     /**
      * Получаем данные из базы
      * @return array
@@ -556,5 +703,15 @@ class BaseController
         }
         return ['status'=>true];
         
+    }
+
+    public function getSaveDocsUrl()
+    {
+        return $this->actionUrl."action=saveDoc&controller=$this->controllerName";
+    }
+
+    public function getGetDocsUrl()
+    {
+        return $this->actionUrl."action=getDocs&controller=$this->controllerName&docOnPage=$this->display";
     }
 }
