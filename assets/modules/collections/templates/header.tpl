@@ -1,7 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/style.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/common/bootstrap/css/bootstrap.min.css?v=4.3.1" />
+    <link rel="stylesheet" type="text/css" href="media/style/common/font-awesome/css/font-awesome.min.css?v=4.7.0" />
+
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/fonts.css?v=1.3.5" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/f1orms.css?v=1.3.5" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/custom.css?v=1.3.5" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/tabpane.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/contextmenu.css" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/main.css" />
     <!--
     <link rel="stylesheet" type="text/css" href="media/style/common/bootstrap/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="media/style/common/font-awesome/css/font-awesome.min.css" />
@@ -92,6 +100,10 @@
             height: 100% !important;
             line-height: 100% !important;
 
+        }
+
+        .webix_el_search input, .webix_el_text input, .webix_el_combo input {
+            border-radius: 0 !important;
         }
     </style>
     <script src="../assets/js/jquery.min.js" type="text/javascript" charset="utf-8"></script>

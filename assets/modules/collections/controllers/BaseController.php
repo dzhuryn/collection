@@ -145,6 +145,10 @@ class BaseController
     }
 
 
+    public $massActionField = 'price';
+
+    //select | webix
+    public $massActionFormType = 'select';
 
     protected $massActionFields = [
         'price'=>[
@@ -414,6 +418,14 @@ class BaseController
 
 
             switch ($_POST['actionType']) {
+                case 'increase':
+                    $newValue = (float)$oldValue + ((float)$oldValue * (float)$formValue / 100);
+                    $newValue = number_format($newValue,$decimals,'','');
+                    break;
+                case 'decrease':
+                    $newValue = (float)$oldValue - ((float)$oldValue * (float)$formValue / 100);
+                    $newValue = number_format($newValue,$decimals,'','');
+                    break;
                 case 'multiplication':
                     $newValue = (float)$oldValue * (float)$formValue;
                     $newValue = number_format($newValue,$decimals,'','');

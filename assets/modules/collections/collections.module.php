@@ -66,13 +66,23 @@ switch ($action) {
     case 'home'://главная страничка вывод и шаблон
         $ownerTpl = $inModule ? 'productsOwner' : 'tabOwner';
 
+        $topActions = '';
+
+        $topActions .= $tpl->parseChunk('@CODE:' . file_get_contents(dirname(__FILE__) . '/templates/massAction'.ucfirst($controller->massActionFormType).'.tpl'),[
+            'massActionFields'=>json_encode($controller->getMassActionFields(),JSON_UNESCAPED_UNICODE),
+            'massActions'=>json_encode($controller->getMassActions(),JSON_UNESCAPED_UNICODE ),
+
+            'massActionField' => $controller->massActionField
+        ]);
+
 
         $data = array_merge($data,[
             'datatable'=>json_encode($controller->renderDataTableOptions(),JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
 
             'getDocsUrl'=>$controller->getGetDocsUrl(),
-            'massActionFields'=>json_encode($controller->getMassActionFields(),JSON_UNESCAPED_UNICODE),
-            'massActions'=>json_encode($controller->getMassActions(),JSON_UNESCAPED_UNICODE ),
+            'topActions' => $topActions,
+
+
 
             'parentTab'=>!$inModule?'parent.':'',
             'controller'=>$controllerName,
