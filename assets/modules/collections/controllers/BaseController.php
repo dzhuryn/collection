@@ -147,8 +147,7 @@ class BaseController
 
     public $massActionField = 'price';
 
-    //select | webix
-    public $massActionFormType = 'select';
+
 
     protected $massActionFields = [
         'price'=>[

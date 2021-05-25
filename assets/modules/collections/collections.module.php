@@ -68,7 +68,7 @@ switch ($action) {
 
         $topActions = '';
 
-        $topActions .= $tpl->parseChunk('@CODE:' . file_get_contents(dirname(__FILE__) . '/templates/massAction'.ucfirst($controller->massActionFormType).'.tpl'),[
+        $topActions .= $tpl->parseChunk('@CODE:' . file_get_contents(dirname(__FILE__) . '/templates/massAction.tpl'),[
             'massActionFields'=>json_encode($controller->getMassActionFields(),JSON_UNESCAPED_UNICODE),
             'massActions'=>json_encode($controller->getMassActions(),JSON_UNESCAPED_UNICODE ),
 
