@@ -153,7 +153,7 @@ class BaseController
         'price'=>[
             'caption'=>'Цена',
             'type'=>'text',
-            'decimals' => 0
+            'decimals' => 2
 
         ],
         'published'=>[
@@ -401,6 +401,7 @@ class BaseController
 
         $actionField = $_POST['actionField'];
         $formValue = $_POST['actionFieldValue'];
+        $decimalsFormValue = (float)str_replace(',','.',$formValue);
 
         $actionFieldConfig = $this->massActionFields[$actionField];
         $decimals  = isset($actionFieldConfig['decimals']) ? $actionFieldConfig['decimals']:0;
@@ -414,32 +415,34 @@ class BaseController
             $doc->edit($document['id']);
 
             $oldValue = $doc->get($actionField);
+            $decimalsOldValue = (float)str_replace(',','.',$oldValue);
+
 
 
             switch ($_POST['actionType']) {
                 case 'increase':
-                    $newValue = (float)$oldValue + ((float)$oldValue * (float)$formValue / 100);
-                    $newValue = number_format($newValue,$decimals,'','');
+                    $newValue = $decimalsOldValue + ($decimalsOldValue * $decimalsFormValue / 100);
+                    $newValue = round($newValue,$decimals);
                     break;
                 case 'decrease':
-                    $newValue = (float)$oldValue - ((float)$oldValue * (float)$formValue / 100);
-                    $newValue = number_format($newValue,$decimals,'','');
+                    $newValue = $decimalsOldValue - ($decimalsOldValue * $decimalsFormValue / 100);
+                    $newValue = round($newValue,$decimals);
                     break;
                 case 'multiplication':
-                    $newValue = (float)$oldValue * (float)$formValue;
-                    $newValue = number_format($newValue,$decimals,'','');
+                    $newValue = $decimalsOldValue * $decimalsFormValue;
+                    $newValue = round($newValue,$decimals);
                     break;
                 case 'division':
-                    $newValue = (float)$oldValue / (float)$formValue;
-                    $newValue = number_format($newValue,$decimals,'','');
+                    $newValue = $decimalsOldValue / $decimalsFormValue;
+                    $newValue = round($newValue,$decimals);
                     break;
                 case 'plus':
-                    $newValue = (float)$oldValue + (float)$formValue;
-                    $newValue = number_format($newValue,$decimals,'','');
+                    $newValue = $decimalsOldValue + $decimalsFormValue;
+                    $newValue = round($newValue,$decimals);
                     break;
                 case 'minus':
-                    $newValue = (float)$oldValue - (float)$formValue;
-                    $newValue = number_format($newValue,$decimals,'','');
+                    $newValue = $decimalsOldValue - $decimalsFormValue;
+                    $newValue = round($newValue,$decimals);
                     break;
                 case 'set':
                     $newValue = $formValue;
