@@ -31,7 +31,7 @@
         </a>
 
         <a id="Button4" class="btn btn-success add-item ml-2" href="javascript:;">
-            <span class="fa-file-o webix_icon"></span> Добавить ресурс
+            <span class="fa-file-o fas webix_icon"></span> Добавить ресурс
         </a>
     </div>
 

@@ -99,7 +99,7 @@ class BaseController
         'edit'=>[
             'id'=>"edit",
             'header' => [""],
-            'template' => "<a class='edit btn btn-info' href='index.php?a=27&id=#id#' title='редактировать' data-title='#pagetitle#'><span class='webix_icon fa-edit'></span></a>",
+            'template' => "<a class='edit btn btn-info' href='index.php?a=27&id=#id#' title='редактировать' data-title='#pagetitle#'><span class='fas fa-edit'></span></a>",
             'width'=>50
         ]
     ];
