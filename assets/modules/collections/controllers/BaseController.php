@@ -596,7 +596,7 @@ class BaseController
      * @return array
      */
     public function saveAction(){
-        $req = $this->modx->db->escape($_REQUEST);
+        $req = $this->modx->db->escape($_POST);
         $outData = ['status' => 'error'];
 
         //если у нас нет заголовка ставим фейковый id
