@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="media/style/common/font-awesome/css/font-awesome.min.css?v=4.7.0" />
 
     <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/fonts.css?v=1.3.5" />
-    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/f1orms.css?v=1.3.5" />
+    <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/forms.css?v=1.3.5" />
     <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/custom.css?v=1.3.5" />
     <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/tabpane.css" />
     <link rel="stylesheet" type="text/css" href="media/style/[+manager_theme+]/css/contextmenu.css" />
